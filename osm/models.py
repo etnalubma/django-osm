@@ -29,7 +29,7 @@ class Nodes(models.Model):
     objects = models.GeoManager()
     class Meta:
         db_table = u'nodes'
-                
+
 class Ways(models.Model):
     id = models.BigIntegerField(primary_key=True)
     version = models.IntegerField()
@@ -46,8 +46,6 @@ class WayNodes(models.Model):
     class Meta:
         db_table = u'way_nodes'
         order_by = ('sequence_id',)
-
-
 
 class Relations(models.Model):
     id = models.BigIntegerField(primary_key=True)
