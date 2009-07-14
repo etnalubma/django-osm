@@ -1,0 +1,25 @@
+Metadata-Version: 1.0
+Name: osm
+Version: 0.1dev
+Summary: Django osmosis model and tools
+Home-page: UNKNOWN
+Author: Francisco Herrero
+Author-email: francisco.herrero@gmail.com
+License: GPL
+Description: Introduction
+        ============
+        
+        
+        
+        Changelog
+        =========
+        
+        0.1 - Unreleased
+        ----------------
+        
+        * Initial release
+        
+        
+Platform: UNKNOWN
+Classifier: Programming Language :: Python
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
