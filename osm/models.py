@@ -19,23 +19,23 @@ class Users(models.Model):
         db_table = u'users'
 
 class Nodes(models.Model):
-    id = models.BigIntegerField(primary_key=True) 
+    id = models.IntegerField(primary_key=True) 
     version = models.IntegerField()
     user = models.ForeignKey('Users')
     tstamp = models.DateTimeField()
-    changeset_id = models.BigIntegerField() 
+    changeset_id = models.IntegerField() 
     geom = models.PointField()
-    streets = models.ManyToManyField('Ways', trough='WayNodes')
+    streets = models.ManyToManyField('Ways', through='WayNodes')
     objects = models.GeoManager()
     class Meta:
         db_table = u'nodes'
 
 class Ways(models.Model):
-    id = models.BigIntegerField(primary_key=True)
+    id = models.IntegerField(primary_key=True)
     version = models.IntegerField()
-    user_id = models.ForeignKey('Users')
+    user = models.ForeignKey('Users')
     tstamp = models.DateTimeField()
-    changeset_id = models.BigIntegerField()
+    changeset_id = models.IntegerField()
     class Meta:
         db_table = u'ways'
 
@@ -45,20 +45,20 @@ class WayNodes(models.Model):
     sequence_id = models.IntegerField()
     class Meta:
         db_table = u'way_nodes'
-        order_by = ('sequence_id',)
+        ordering = ['sequence_id']
 
 class Relations(models.Model):
-    id = models.BigIntegerField(primary_key=True)
+    id = models.IntegerField(primary_key=True)
     version = models.IntegerField()
     user = models.ForeignKey('Users')
     tstamp = models.DateTimeField()
-    changeset_id = models.BigIntegerField()
+    changeset_id = models.IntegerField()
     class Meta:
         db_table = u'relations'
 
 class RelationMembers(models.Model):
-    relation_id = models.BigIntegerField() 
-    member_id = models.BigIntegerField() 
+    relation = models.ForeignKey('Relations') 
+    member_id = models.IntegerField() 
     member_type = models.TextField() 
     member_role = models.TextField()
     sequence_id = models.IntegerField()
@@ -85,4 +85,20 @@ class RelationTags(models.Model):
     v = models.TextField()
     class Meta:
         db_table = u'relation_tags'
+
+# Custom tables to facilitate ways searching.
+class SearchableWay(models.Model):
+    name = models.TextField(null=True)
+    way = models.OneToOneField('Ways')
+    sequence = models.TextField(null=True)
+    
+class SearchableNode(models.Model):
+    way = models.ManyToManyField('SearchableWay', through='WayDoor')
+    node = models.OneToOneField('Nodes')
+#    sequence_id = models.IntegerField()
+
+class WayDoor(models.Model):
+    number = models.IntegerField(null=True)
+    way = models.ForeignKey('SearchableWay')
+    node = models.ForeignKey('SearchableNode')
 
