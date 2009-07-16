@@ -42,7 +42,7 @@ class Ways(models.Model):
 class WayNodes(models.Model):
     way = models.ForeignKey('Ways') 
     node = models.ForeignKey('Nodes') 
-    sequence_id = models.IntegerField()
+    sequence_id = models.IntegerField(primary_key=True)
     class Meta:
         db_table = u'way_nodes'
         ordering = ['sequence_id']
@@ -93,7 +93,7 @@ class SearchableWay(models.Model):
     sequence = models.TextField(null=True)
     
 class SearchableNode(models.Model):
-    way = models.ManyToManyField('SearchableWay', through='WayDoor')
+    way = models.ManyToManyField('SearchableWay', through='WayDoor', symmetrical= True)
     node = models.OneToOneField('Nodes')
 #    sequence_id = models.IntegerField()
 

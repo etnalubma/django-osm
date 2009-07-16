@@ -3,17 +3,18 @@ from django.db import connection, transaction
 import os
 
 searchable_tags = ['highway']
+import pdb;
 
 def set_searchable_ways():
     # Create extra tables
     cursor = connection.cursor()
     cursor.execute(SQL_SEARCH_TABLES)
     transaction.commit_unless_managed()        
-    try:
-        cursor.execute(SQL_TAGS_KEYS)
-        transaction.commit_unless_managed()        
-    except:
-        pass    
+#    try:
+#        cursor.execute(SQL_TAGS_KEYS)
+#        transaction.commit_unless_managed()        
+#    except:
+#        pass    
     # Create SearchableWays
     ways = Ways.objects.all()
     for w in ways:
@@ -31,8 +32,9 @@ def set_searchable_ways():
             sw.save()
             
             # Create searchable nodes
-            nodes = w.nodes_set.all()
-            for nod in nodes:
+            wnodes = w.waynodes_set.all()
+            for wnod in wnodes:
+                nod = wnod.node
                 try:
                     sn = SearchableNode.objects.get(node=nod)
                 except SearchableNode.DoesNotExist:
@@ -45,7 +47,6 @@ def set_relations():
     # Get relations type street_number
     stags = RelationTags.objects.filter(k='type',v='street_number')
     strel = set(map(lambda x: x.relation, stags))
-    print strel
     
     # Filter sequential types
     strel = filter(lambda x: x.relationtags_set.filter(k='scheme',v='sequential').count() > 0, strel)
@@ -66,9 +67,11 @@ def set_relations():
             snode = SearchableNode.objects.get(node__id=rn.member_id)
             
             # Get ways in relation asociated width snode
-            sways = Sw & snode.ways_set.all()
+            sways = Sw & snode.way.all()
             
             # Add door number to way door relation
+            print dnumber, " - ".join([s.name for s in sways])
+
             for sway in sways:
                 wd = WayDoor.objects.filter(way=sway, node=snode)
                 wd.update(number=dnumber)
