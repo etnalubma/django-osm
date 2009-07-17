@@ -1,5 +1,7 @@
 from django.contrib.gis.gdal import OGRGeometry, SpatialReference
-from osm.models import SearchableWay, SearchableNode, WayDoor
+from osm.models import SearchableWay, WayNodes, WayNodesDoor
+from django.utils import simplejson
+from django.contrib.gis.geos import Point
 
 def get_location_by_door(street, door):
     d = int(door)
@@ -7,22 +9,31 @@ def get_location_by_door(street, door):
     dmax = d+20000
 
     # Get ways data
-    qset = WayDoor.objects.select_related(depth=2).filter(way__name__startswith = street)
+    qset = WayNodes.objects.select_related('way_searchableway', 'node').filter(way__searchableway__name__startswith = street)
     
     # Set points grouped by way
     waysdict = {}
-    for wd in qset:
+    for wn in qset:
+        try:
+            # This is making queries, need to be checked
+            door = wn.waynodesdoor.number
+        except WayNodesDoor.DoesNotExist:
+            door = None
+        
         point = {
-            'way_id': wd.way_id,
-            'geom': wd.node.node.geom,
-            'door': wd.number,
-            'id': wd.node.node.id,
+            'way_id': wn.way_id,
+            'geom': wn.node.geom,
+            'door': door,
+            'id': wn.node_id,
         }
-        if wd.way_id in waysdict.keys():
-            waysdict[wd.way_id].append(point)
+        if wn.way_id in waysdict.keys():
+            waysdict[wn.way_id].append(point)
         else:
-            waysdict[wd.way_id] = [point]
+            waysdict[wn.way_id] = [point]
     
+    if waysdict == {}:
+        return None
+        
     # get all nodes
     nodes = reduce(lambda x,y: x+y, waysdict.values(), [])
   
@@ -90,26 +101,25 @@ def get_location_by_door(street, door):
     d_ptox = d_stox
     p_index = 0
 
-    while p_index < len(sequence)-1:
+    while p_index < len(sequence):
         dist = sequence[p_index]['geom'].distance(sequence[p_index+1]['geom'])
+        #import pdb; pdb.set_trace()
         if dist >= d_ptox:
             break
         else:
-            dist -= d_ptox
+            d_ptox -= dist
             p_index +=1
-    
+
     # Calculate proportion of interpolated point
     pprop = d_ptox / sequence[p_index]['geom'].distance(sequence[p_index+1]['geom'])
-
+    
     point = interpolate_point(
         sequence[p_index]['geom'],
         sequence[p_index+1]['geom'], 
         pprop
     )
 
-    return (point, (e['door'] - s['door'])/2)
-    
-from django.contrib.gis.geos import Point
+    return (point, e['door']-s['door'])
 
 def interpolate_point(p1, p2, prop):
     """ Calculates the point in the segment p1, p2

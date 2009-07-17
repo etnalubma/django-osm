@@ -42,10 +42,11 @@ class Ways(models.Model):
 class WayNodes(models.Model):
     way = models.ForeignKey('Ways') 
     node = models.ForeignKey('Nodes') 
-    sequence_id = models.IntegerField(primary_key=True)
+    sequence_id = models.IntegerField()
     class Meta:
         db_table = u'way_nodes'
-        ordering = ['sequence_id']
+        unique_together = ('way','sequence_id')
+        ordering = ['way','sequence_id']
 
 class Relations(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -90,15 +91,15 @@ class RelationTags(models.Model):
 class SearchableWay(models.Model):
     name = models.TextField(null=True)
     way = models.OneToOneField('Ways')
-    sequence = models.TextField(null=True)
     
-class SearchableNode(models.Model):
-    way = models.ManyToManyField('SearchableWay', through='WayDoor', symmetrical= True)
-    node = models.OneToOneField('Nodes')
+#class SearchableNode(models.Model):
+#    way = models.ManyToManyField('SearchableWay', through='WayDoor', symmetrical= True)
+#    node = models.OneToOneField('Nodes')
 #    sequence_id = models.IntegerField()
 
-class WayDoor(models.Model):
+class WayNodesDoor(models.Model):
+    waynode = models.OneToOneField('WayNodes')
     number = models.IntegerField(null=True)
-    way = models.ForeignKey('SearchableWay')
-    node = models.ForeignKey('SearchableNode')
+#    way = models.ForeignKey('SearchableWay')
+#    node = models.ForeignKey('SearchableNode')
 
