@@ -3,7 +3,28 @@ from osm.models import SearchableWay, WayNodes, WayNodesDoor
 from django.utils import simplejson
 from django.contrib.gis.geos import Point
 
+def get_locations_by_intersection(street1,street2):
+    """
+    This function return a list of nodes that match the intersection of streets.     
+    """
+    qs = Nodes.objects.filter(waynodes__way__searchableway__name__startswith=street1)
+    qs.filter(waynodes__way__searchableway__name__startswith=street2)
+
+    return [n.geom for n in qs1]
+
 def get_location_by_door(street, door):
+    """ 
+    This function get a string with name of street and returns a tuple:
+        - The first element is a GEOS Point object.
+        - The second element is a door distance from this point to the target.
+        
+    The search procedure return this cases:
+        - If there is not match or there is no numbers for that match returns None
+        - If there is an exact match returns the point and 0 for distance
+        - If there is an aproximated match returns the closest door point and the distance
+        - If there are 2 point in a way that surround the door number, then return an 
+          interpolation for that point in proportion of the distance, and a aproximate radius.
+    """
     d = int(door)
     # maxium door distance
     dmax = d+20000
@@ -119,7 +140,7 @@ def get_location_by_door(street, door):
         pprop
     )
 
-    return (point, e['door']-s['door'])
+    return (point, float(e['door']-s['door'])/2)
 
 def interpolate_point(p1, p2, prop):
     """ Calculates the point in the segment p1, p2

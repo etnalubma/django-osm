@@ -5,16 +5,17 @@ import os
 searchable_tags = ['highway']
 import pdb;
 
+def update_osmosis_tables():
+    cursor = connection.cursor()
+    cursor.execute(SQL_TAGS_KEYS)
+    transaction.commit_unless_managed()        
+
 def set_searchable_ways():
     # Create extra tables
     cursor = connection.cursor()
     cursor.execute(SQL_SEARCH_TABLES)
     transaction.commit_unless_managed()        
-#    try:
-#        cursor.execute(SQL_TAGS_KEYS)
-#        transaction.commit_unless_managed()        
-#    except:
-#        pass    
+
     # Create SearchableWays
     ways = Ways.objects.all()
     for w in ways:
@@ -35,39 +36,33 @@ def set_relations():
     # Get relations type street_number
     stags = RelationTags.objects.filter(k='type',v='street_number')
     strel = set(map(lambda x: x.relation, stags))
-    
+    print strel
     # Filter sequential types
     strel = filter(lambda x: x.relationtags_set.filter(k='scheme',v='sequential').count() > 0, strel)
-    
+    print strel
     for rel in strel:
         # add Ways and nodes
         
         # Get Ways id from relation
         rmemberways = RelationMembers.objects.filter(relation=rel, member_type='W')
         ways_id = [r.member_id for r in rmemberways]
-        
+        print ways_id
         # Get RelationMembers of type Node
         rmembernodes = RelationMembers.objects.filter(relation=rel, member_type='N')
         
         for rmn in rmembernodes:
-            number = rmn.member_role
-            waynodes = WayNodes.objects.filter(way__id__in = ways_id, node__id = rmn.member_id)
-            
-            for wn in waynodes:
-                wnd = WayNodesDoor(waynode=wn, number=number)
-                wnd.save()
-            # Get searchable node
-            #snode = SearchableNode.objects.get(node__id=rn.member_id)
-            
-            # Get ways in relation asociated width snode
-            #sways = Sw & node.way.all()
-            
-            # Add door number to way door relation
-            #print dnumber, " - ".join([s.name for s in sways])
-            #
-            #for sway in sways:
-            #    wd = WayDoor.objects.filter(way=sway, node=snode)
-            #    wd.update(number=dnumber)
+            number = rmn.member_role.strip()
+            if number.isdigit():
+                waynodes = WayNodes.objects.filter(way__id__in = ways_id, node__id = rmn.member_id)
+                
+                for wn in waynodes:
+                    wnd = WayNodesDoor(waynode=wn, number=number)
+                    wnd.save()
+                    print wnd.number, wnd.waynode.way.searchableway.name
+            else:
+                print "Skipped '%s' for %s: role is not a number or empty" % \
+                       (wnd.member_role, wnd.waynode.way.searchableway.name)
+
 
 SQL_SEARCH_TABLES = """   
 DROP TABLE IF EXISTS osm_waynodesdoor;

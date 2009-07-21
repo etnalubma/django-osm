@@ -92,14 +92,9 @@ class SearchableWay(models.Model):
     name = models.TextField(null=True)
     way = models.OneToOneField('Ways')
     
-#class SearchableNode(models.Model):
-#    way = models.ManyToManyField('SearchableWay', through='WayDoor', symmetrical= True)
-#    node = models.OneToOneField('Nodes')
-#    sequence_id = models.IntegerField()
-
+    
+    
 class WayNodesDoor(models.Model):
     waynode = models.OneToOneField('WayNodes')
     number = models.IntegerField(null=True)
-#    way = models.ForeignKey('SearchableWay')
-#    node = models.ForeignKey('SearchableNode')
 
