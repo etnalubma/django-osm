@@ -10,7 +10,8 @@ Requirements
 
  * PostGis
  * Osmosis trunk version. 
-
+ * GeoDjango
+ 
 Installation
 ===========
 
