@@ -1,5 +1,5 @@
 from django.contrib.gis.gdal import OGRGeometry, SpatialReference
-from osm.models import SearchableWay, WayNodes, WayNodesDoor
+from osm.models import SearchableWay, WayNodes, WayNodesDoor, Nodes
 from django.utils import simplejson
 from django.contrib.gis.geos import Point
 
@@ -10,7 +10,7 @@ def get_locations_by_intersection(street1,street2):
     qs = Nodes.objects.filter(waynodes__way__searchableway__name__startswith=street1)
     qs.filter(waynodes__way__searchableway__name__startswith=street2)
 
-    return [n.geom for n in qs1]
+    return [n.geom for n in qs]
 
 def get_location_by_door(street, door):
     """ 
