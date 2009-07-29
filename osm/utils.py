@@ -2,15 +2,45 @@ from django.contrib.gis.gdal import OGRGeometry, SpatialReference
 from osm.models import SearchableWay, WayNodes, WayNodesDoor, Nodes
 from django.utils import simplejson
 from django.contrib.gis.geos import Point
+from django.db import connection
+
+def get_streets_list(street):
+    """ Esta funcion auxiliar sirve para desambiguar una busqueda de calles y matar gatitos. """
+
+    cursor = connection.cursor()
+
+    cursor.execute("""SELECT DISTINCT osm_searchableway.name FROM osm_searchableway 
+    WHERE osm_searchableway.name ILIKE %s""",['%%%s%%' % street])
+    return cursor.fetchall()    
+
+def get_intersection_list(street, intersection):
+    """ Esta funcion auxiliar sirve para desambiguar una busqueda de interseccion de calles y matar gatitos. """
+
+    cursor = connection.cursor()
+
+    cursor.execute("""SELECT DISTINCT w1.name, w2.name FROM 
+(osm_searchableway w1 join way_nodes wn1 on (w1.way_id = wn1.way_id)) join 
+(osm_searchableway w2 join way_nodes wn2 on (w2.way_id = wn2.way_id))
+on (wn1.node_id = wn2.node_id and w1.name != w2.name)
+ and w1.name ilike %s and w2.name ilike %s """,['%%%s%%' % street,'%%%s%%' % intersection])
+    return cursor.fetchall()
 
 def get_locations_by_intersection(street1,street2):
     """
     This function return a list of nodes that match the intersection of streets.     
     """
-    qs = Nodes.objects.filter(waynodes__way__searchableway__name__startswith=street1)
-    qs.filter(waynodes__way__searchableway__name__startswith=street2)
 
-    return [n.geom for n in qs]
+    cursor = connection.cursor()
+
+    cursor.execute("""SELECT DISTINCT AsText(n.geom) FROM 
+            (osm_searchableway w1 join way_nodes wn1 on (w1.way_id = wn1.way_id) join
+                nodes n on (n.id = wn1.node_id)
+            ) join 
+            (osm_searchableway w2 join way_nodes wn2 on (w2.way_id = wn2.way_id))
+            on (wn1.node_id = wn2.node_id and w1.name != w2.name)
+             and w1.name = %s and w2.name = %s """,[street1, street2])
+
+    return [n[0] for n in cursor.fetchall()]
 
 def get_location_by_door(street, door):
     """ 
