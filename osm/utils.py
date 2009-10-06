@@ -1,9 +1,50 @@
+# -*- coding: utf-8 -*-
+
 from django.contrib.gis.gdal import OGRGeometry, SpatialReference
 from osm.models import SearchableWay, WayNodes, WayNodesDoor, Nodes
 from django.utils import simplejson
 from django.contrib.gis.geos import Point
 from django.db import connection
+from osm import special_chars, prefix_list
 
+def word_strip(strin):
+    """ takes extra spaces from a string and return the list of words """
+    
+    wlist = filter(lambda x: x<>'',strin.split(' '))
+    
+    return wlist
+
+def clean_search_street(street):
+    """ This function clean search string """
+    
+    not_a_prefix = lambda x: prefix_list.get(x, None) is None
+    
+    strout = street.lower()
+        
+    for k,v in special_chars.iteritems():
+        strout = strout.replace(k,v)
+        
+    wlist = word_strip(strout)
+    
+    wlist = filter(not_a_prefix, wlist)
+    
+    return " ".join(wlist)
+            
+def normalize_street_name(street):
+    not_a_prefix = lambda x: prefix_list.get(x, None) is None
+    
+    strout = street
+        
+    for k,v in special_chars.iteritems():
+        strout = strout.replace(k,v)
+        
+    wlist = word_strip(strout)
+    
+    wlist = map(lambda x: prefix_list.get(x, x), wlist)
+    
+    return " ".join(wlist)
+    
+    
 def get_streets_list(street):
     """ Esta funcion auxiliar sirve para desambiguar una busqueda de calles y matar gatitos. """
 
