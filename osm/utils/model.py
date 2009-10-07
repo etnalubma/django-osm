@@ -1,7 +1,7 @@
 from django.db import connection, transaction
 import os
 from osm.models import *
-from osm.words import normalize_street_name,  printable_street_name
+from osm.utils.words import normalize_street_name,  printable_street_name
 
 
 searchable_tags = ['highway']
