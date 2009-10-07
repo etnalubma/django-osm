@@ -30,10 +30,20 @@ $ ./osmosis-trunk/bin/osmosis --read-xml file="inputfile.osm" --write-pgsql user
 To see more options of osmosis tool check:
 http://wiki.openstreetmap.org/wiki/Osmosis/DetailedUsage
 
+Then you need to configure the svn file sources in your settings.py with OSM_CSV_ROOT:
+For example:
+OSM_CSV_ROOT = os.path.join(os.path.dirname(__file__), 'csv')
+
+This folder must contain 2 files: 
+  * specialchars.csv
+    This file must contain 2 columns: the first is a special character, the second is the replaced character
+  * abbreviations.csv
+    This file must contain 2 columns: the first is a prefix, the second is the normalized prefix
+
 Then you have to run django shell and run 3 scripts:
 
 $ django shell
->>> from osm.modelutils import *
+>>> from osm.utils.model import *
 >>> update_osmosis_tables()
 >>> set_searchable_ways()
 >>> set_relations()
@@ -42,8 +52,29 @@ This scripts should add indexes to some models, add extra models for searchable 
 To see specification:
 http://wiki.openstreetmap.org/wiki/Argentina:Altura_de_las_Calles
 
-utils.py Functions
-==================
+utils Functions
+===============
+
+model.py
+========
+
+Contains the methods to readapt osmosis model and create extra util models.
+
+
+lists.py
+==========
+
+Contains street lists queries that couldn't be created with standard ORM of django.
+
+
+words.py
+========
+
+Contains normalization functions for street search.
+
+
+search.py
+=========
 
 get_location_by_intersection:
 This function takes 2 street names and return all the intersections between ways with such names.

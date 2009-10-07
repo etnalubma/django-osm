@@ -40,7 +40,7 @@ class Ways(models.Model):
         db_table = u'ways'
 
 class WayNodes(models.Model):
-    way = models.ForeignKey('Ways') 
+    way = models.ForeignKey('Ways')
     node = models.ForeignKey('Nodes') 
     sequence_id = models.IntegerField()
     class Meta:
@@ -81,7 +81,7 @@ class WayTags(models.Model):
         db_table = u'way_tags'
 
 class RelationTags(models.Model):
-    relation = models.ForeignKey('Relations') 
+    relation = models.ForeignKey('Relations')
     k = models.TextField()
     v = models.TextField()
     class Meta:
@@ -90,9 +90,9 @@ class RelationTags(models.Model):
 # Custom tables to facilitate ways searching.
 class SearchableWay(models.Model):
     name = models.TextField(null=True)
+    norm = models.TextField(null=True)
+    osm_name = models.TextField(null=True)
     way = models.OneToOneField('Ways')
-    
-    
     
 class WayNodesDoor(models.Model):
     waynode = models.OneToOneField('WayNodes')
