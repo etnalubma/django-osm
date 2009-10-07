@@ -5,66 +5,6 @@ from osm.models import SearchableWay, WayNodes, WayNodesDoor, Nodes
 from django.utils import simplejson
 from django.contrib.gis.geos import Point
 from django.db import connection
-from osm import special_chars, prefix_list
-
-def word_strip(strin):
-    """ takes extra spaces from a string and return the list of words """
-    
-    wlist = filter(lambda x: x<>'',strin.split(' '))
-    
-    return wlist
-
-def clean_search_street(street):
-    """ This function clean search string """
-    
-    not_a_prefix = lambda x: prefix_list.get(x, None) is None
-    
-    strout = street.lower()
-        
-    for k,v in special_chars.iteritems():
-        strout = strout.replace(k,v)
-        
-    wlist = word_strip(strout)
-    
-    wlist = filter(not_a_prefix, wlist)
-    
-    return " ".join(wlist)
-            
-def normalize_street_name(street):
-    not_a_prefix = lambda x: prefix_list.get(x, None) is None
-    
-    strout = street
-        
-    for k,v in special_chars.iteritems():
-        strout = strout.replace(k,v)
-        
-    wlist = word_strip(strout)
-    
-    wlist = map(lambda x: prefix_list.get(x, x), wlist)
-    
-    return " ".join(wlist)
-    
-    
-def get_streets_list(street):
-    """ Esta funcion auxiliar sirve para desambiguar una busqueda de calles y matar gatitos. """
-
-    cursor = connection.cursor()
-
-    cursor.execute("""SELECT DISTINCT osm_searchableway.name FROM osm_searchableway 
-    WHERE osm_searchableway.name ILIKE %s""",['%%%s%%' % street])
-    return cursor.fetchall()    
-
-def get_intersection_list(street, intersection):
-    """ Esta funcion auxiliar sirve para desambiguar una busqueda de interseccion de calles y matar gatitos. """
-
-    cursor = connection.cursor()
-
-    cursor.execute("""SELECT DISTINCT w1.name, w2.name FROM 
-(osm_searchableway w1 join way_nodes wn1 on (w1.way_id = wn1.way_id)) join 
-(osm_searchableway w2 join way_nodes wn2 on (w2.way_id = wn2.way_id))
-on (wn1.node_id = wn2.node_id and w1.name != w2.name)
- and w1.name ilike %s and w2.name ilike %s """,['%%%s%%' % street,'%%%s%%' % intersection])
-    return cursor.fetchall()
 
 def get_locations_by_intersection(street1,street2):
     """
@@ -222,4 +162,3 @@ def interpolate_point(p1, p2, prop):
         (p2.y - p1.y)*prop + p1.y,
     )
     return out
-

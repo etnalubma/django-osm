@@ -1,21 +1,22 @@
-from models import *
 from django.db import connection, transaction
 import os
+from osm.models import *
+from osm.words import normalize_street_name,  printable_street_name
+
 
 searchable_tags = ['highway']
-import pdb;
 
 def update_osmosis_tables():
     cursor = connection.cursor()
     cursor.execute(SQL_TAGS_KEYS)
-    transaction.commit_unless_managed()        
+    transaction.commit_unless_managed()
 
 def set_searchable_ways():
     # Create extra tables
     cursor = connection.cursor()
     cursor.execute(SQL_SEARCH_TABLES)
-    transaction.commit_unless_managed()        
-
+    transaction.commit_unless_managed()
+    
     # Create SearchableWays
     ways = Ways.objects.all()
     for w in ways:
@@ -23,16 +24,22 @@ def set_searchable_ways():
         tags = {}
         for wt in wtags:
             tags[wt['k']] = wt['v']
-            
+        
         # Control correct keys for way
         if 'name' in tags.keys() and \
-           set(searchable_tags).intersection(set(tags.keys())) <> set():            
+           set(searchable_tags).intersection(set(tags.keys())) <> set():
             
-            # Create searchable way 
-            sw = SearchableWay(name=tags['name'],way=w)
+            # Create searchable way
+            name = tags['name']
+            sw = SearchableWay(
+                name=printable_street_name(name),
+                norm=normalize_street_name(name),
+                way=w,
+                osm_name=name
+            )
             sw.save()
-                
-def set_relations():    
+
+def set_relations():
     # Get relations type street_number
     stags = RelationTags.objects.filter(k='type',v='street_number')
     strel = set(map(lambda x: x.relation, stags))
@@ -71,6 +78,8 @@ DROP TABLE IF EXISTS osm_searchableway;
 CREATE TABLE "osm_searchableway" (
     "id" serial NOT NULL PRIMARY KEY,
     "name" text,
+    "norm" text,
+    "osm_name" text,
     "way_id" integer NOT NULL UNIQUE REFERENCES "ways" ("id") DEFERRABLE INITIALLY DEFERRED
 );
 CREATE TABLE "osm_waynodesdoor" (
