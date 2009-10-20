@@ -6,6 +6,9 @@ from django.utils import simplejson
 from django.contrib.gis.geos import Point
 from django.db import connection
 
+MAX_RADIUS = 300
+
+
 def get_locations_by_intersection(street1,street2):
     """
     This function return a list of nodes that match the intersection of streets.     
@@ -81,6 +84,8 @@ def get_location_by_door(street, door):
         # c is the exact solution
         return (c['geom'], 0)
 
+    elif abs(c['door']-d) > MAX_RADIUS:
+        return None
     
     cway_id = c['way_id']
 
@@ -135,7 +140,7 @@ def get_location_by_door(street, door):
 
     while p_index < len(sequence):
         dist = sequence[p_index]['geom'].distance(sequence[p_index+1]['geom'])
-        #import pdb; pdb.set_trace()
+
         if dist >= d_ptox:
             break
         else:
