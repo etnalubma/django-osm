@@ -1,5 +1,7 @@
 import csv, codecs
-from nomenclador.settings import OSM_CSV_ROOT
+from django.conf import settings 
+
+OSM_CSV_ROOT = settings.OSM_CSV_ROOT
 
 OSM_ABBREVIATIONS_FILE = 'abbreviations.csv'
 OSM_SPECIAL_CHARS_FILE = 'specialchars.csv'

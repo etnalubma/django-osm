@@ -20,7 +20,8 @@ http://wiki.openstreetmap.org/wiki/Osmosis_PostGIS_Setup
 
 After installed, run the sql of osmosis structure into your model database:
 
-$ psql -d database_name < osmosis/trunk/scripts/sql_simple_schema_0.6.sql
+$ psql -d database_name -U database_owner < osmosis/script/pgsql_simple_schema_0.6.sql 
+
 
 Now, we are ready to import osm data to postgis database using osmosis:
 
@@ -39,6 +40,9 @@ This folder must contain 2 files:
     This file must contain 2 columns: the first is a special character, the second is the replaced character
   * abbreviations.csv
     This file must contain 2 columns: the first is a prefix, the second is the normalized prefix
+
+
+
 
 Then you have to run django shell and run 3 scripts:
 
