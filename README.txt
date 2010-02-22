@@ -20,7 +20,7 @@ http://wiki.openstreetmap.org/wiki/Osmosis_PostGIS_Setup
 
 After installed, run the sql of osmosis structure into your model database:
 
-$ psql -d database_name -U database_owner < osmosis/script/pgsql_simple_schema_0.6.sql 
+$ psql -d database_name -U database_owner -h localhost < osmosis/script/pgsql_simple_schema_0.6.sql 
 
 
 Now, we are ready to import osm data to postgis database using osmosis:
