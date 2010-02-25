@@ -180,6 +180,12 @@ class RelationTags(models.Model):
 #    osm_name = models.TextField(null=True)
 #    way = models.OneToOneField('Ways')
     
+    def __unicode__(self):
+        return self.name
+        
+    class Meta:
+        ordering = ('name',)
+    
 class WayNodesDoor(models.Model):
     waynode = models.OneToOneField('WayNodes')
     number = models.IntegerField(null=True)
