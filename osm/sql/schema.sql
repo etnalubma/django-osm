@@ -1,1 +1,0 @@
-ALTER TABLE way_tags ADD COLUMN "id" serial PRIMARY KEY;

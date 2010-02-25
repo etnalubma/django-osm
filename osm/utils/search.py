@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from django.contrib.gis.gdal import OGRGeometry, SpatialReference
-from osm.models import SearchableWay, WayNodes, WayNodesDoor, Nodes
+from osm.models import Streets, WayNodes, WayNodesDoor, Nodes
 from django.utils import simplejson
 from django.contrib.gis.geos import Point
 from django.db import connection
@@ -13,19 +13,12 @@ def get_locations_by_intersection(street1,street2):
     """
     This function return a list of nodes that match the intersection of streets.     
     """
-
-    cursor = connection.cursor()
-
-    cursor.execute("""SELECT DISTINCT AsText(n.geom) FROM 
-            (osm_searchableway w1 join way_nodes wn1 on (w1.way_id = wn1.way_id) join
-                nodes n on (n.id = wn1.node_id)
-            ) join 
-            (osm_searchableway w2 join way_nodes wn2 on (w2.way_id = wn2.way_id))
-            on (wn1.node_id = wn2.node_id and w1.name != w2.name)
-             and w1.name = %s and w2.name = %s """,[street1, street2])
-
-    return [n[0] for n in cursor.fetchall()]
-
+    out = Nodes.objects.all()
+    out = out.filter(waynodes__way__street__name = street1)
+    out = out.filter(waynodes__way__street__name = street2)
+    
+    return out
+    
 def get_location_by_door(street, door):
     """ 
     This function get a string with name of street and returns a tuple:
@@ -44,7 +37,7 @@ def get_location_by_door(street, door):
     dmax = d+20000
 
     # Get ways data
-    qset = WayNodes.objects.select_related('way_searchableway', 'node').filter(way__searchableway__name__startswith = street)
+    qset = WayNodes.objects.select_related('way_street', 'node').filter(way__street__name__startswith = street)
     
     # Set points grouped by way
     waysdict = {}

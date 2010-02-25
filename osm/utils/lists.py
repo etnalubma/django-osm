@@ -2,14 +2,14 @@
 
 from django.db import connection
 
-def get_streets_list(street):
-    """ Esta funcion auxiliar sirve para desambiguar una busqueda de calles """
-
-    cursor = connection.cursor()
-
-    cursor.execute("""SELECT DISTINCT osm_searchableway.name FROM osm_searchableway 
-    WHERE osm_searchableway.norm ILIKE %s""",['%%%s%%' % street])
-    return cursor.fetchall()    
+#def get_streets_list(street):
+#    """ Esta funcion auxiliar sirve para desambiguar una busqueda de calles """
+#
+#    cursor = connection.cursor()
+#
+#    cursor.execute("""SELECT DISTINCT osm_searchableway.name FROM osm_searchableway 
+#    WHERE osm_searchableway.norm ILIKE %s""",['%%%s%%' % street])
+#    return cursor.fetchall()    
 
 def get_intersection_list(street, intersection):
     """ Esta funcion auxiliar sirve para desambiguar una busqueda de interseccion de calles. """

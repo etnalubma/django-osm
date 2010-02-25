@@ -4,40 +4,34 @@ from osm.models import *
 from osm.utils.words import normalize_street_name,  printable_street_name
 
 
-searchable_tags = ['highway']
+streets_tags = [u'highway']
 
-def update_osmosis_tables():
-    cursor = connection.cursor()
-    cursor.execute(SQL_TAGS_KEYS)
-    transaction.commit_unless_managed()
-
-def set_searchable_ways():
-    # Create extra tables
-    cursor = connection.cursor()
-    cursor.execute(SQL_SEARCH_TABLES)
-    transaction.commit_unless_managed()
+def set_streets():
     
     # Create SearchableWays
     ways = Ways.objects.all()
+    
+    streets = {}
     for w in ways:
-        wtags = WayTags.objects.filter(way = w).values()
-        tags = {}
-        for wt in wtags:
-            tags[wt['k']] = wt['v']
-        
+
+        tags = w.tags
+        reqset = set(streets_tags).intersection(set(tags.keys()))        
+
         # Control correct keys for way
-        if 'name' in tags.keys() and \
-           set(searchable_tags).intersection(set(tags.keys())) <> set():
+        if (u'name' not in tags.keys()) or (reqset == set()):
+            continue
             
-            # Create searchable way
-            name = tags['name']
-            sw = SearchableWay(
-                name=printable_street_name(name),
-                norm=normalize_street_name(name),
-                way=w,
-                osm_name=name
-            )
-            sw.save()
+        name = printable_street_name(tags[u'name'])
+        norm = normalize_street_name(tags[u'name'])
+
+        if not (norm in streets.keys()):
+            s = Streets(name=name, norm=norm)
+            s.save()
+            streets[norm] = s
+
+        w.street = streets[norm]
+        w.save()
+            
 
 def set_relations():
     # Get relations type street_number
@@ -71,30 +65,4 @@ def set_relations():
                        (wnd.member_role, wnd.waynode.way.searchableway.name)
 
 
-SQL_SEARCH_TABLES = """   
-DROP TABLE IF EXISTS osm_waynodesdoor;
-DROP TABLE IF EXISTS osm_searchableway;
 
-CREATE TABLE "osm_searchableway" (
-    "id" serial NOT NULL PRIMARY KEY,
-    "name" text,
-    "norm" text,
-    "osm_name" text,
-    "way_id" integer NOT NULL UNIQUE REFERENCES "ways" ("id") DEFERRABLE INITIALLY DEFERRED
-);
-CREATE TABLE "osm_waynodesdoor" (
-    "id" serial NOT NULL PRIMARY KEY,
-    "waynode_id" integer NOT NULL UNIQUE REFERENCES "way_nodes" ("id") DEFERRABLE INITIALLY DEFERRED,
-    "number" integer
-)
-;
-"""
-
-SQL_TAGS_KEYS = """
-ALTER TABLE ONLY way_nodes DROP CONSTRAINT pk_way_nodes;
-ALTER TABLE way_nodes ADD COLUMN "id" serial PRIMARY KEY;
-ALTER TABLE way_tags ADD COLUMN "id" serial PRIMARY KEY;
-ALTER TABLE relation_tags ADD COLUMN "id" serial PRIMARY KEY;
-ALTER TABLE node_tags ADD COLUMN "id" serial PRIMARY KEY;
-ALTER TABLE relation_members ADD COLUMN "id" serial PRIMARY KEY;
-"""
