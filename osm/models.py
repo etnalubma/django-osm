@@ -179,12 +179,12 @@ class RelationTags(models.Model):
 #    norm = models.TextField(null=True)
 #    osm_name = models.TextField(null=True)
 #    way = models.OneToOneField('Ways')
-    
-    def __unicode__(self):
-        return self.name
-        
-    class Meta:
-        ordering = ('name',)
+#    
+#    def __unicode__(self):
+#        return self.name
+#        
+#    class Meta:
+#        ordering = ('name',)
     
 class WayNodesDoor(models.Model):
     waynode = models.OneToOneField('WayNodes')
