@@ -2,18 +2,20 @@ from django.db import connection, transaction
 import os
 from osm.models import *
 from osm.utils.words import normalize_street_name,  printable_street_name
-
+from django.db import transaction
 
 streets_tags = [u'highway']
 
+@transaction.commit_on_success
 def set_streets():
-    
-    # Create SearchableWays
     ways = Ways.objects.all()
-    
     streets = {}
+    
+    # Delete previous streets
+    ways.update(street=None)
+    Streets.objects.all().delete()
+    
     for w in ways:
-
         tags = w.tags
         reqset = set(streets_tags).intersection(set(tags.keys()))        
 
@@ -32,22 +34,26 @@ def set_streets():
         w.street = streets[norm]
         w.save()
             
+@transaction.commit_on_success
+def set_doors():
+    
+    # Clear previous WayNodesDoor
+    WayNodesDoor.objects.all().delete()
+    
+    
+    
+    # Get street number relations  of sequential scheme
+    qsrel = Relations.objects.all()
+    qsrel = qsrel.filter(relationtags__k = 'type', relationtags__v = 'street_number')
+    qsrel = qsrel.filter(relationtags__k = 'scheme', relationtags__v = 'sequential')
 
-def set_relations():
-    # Get relations type street_number
-    stags = RelationTags.objects.filter(k='type',v='street_number')
-    strel = set(map(lambda x: x.relation, stags))
-    print strel
-    # Filter sequential types
-    strel = filter(lambda x: x.relationtags_set.filter(k='scheme',v='sequential').count() > 0, strel)
-    print strel
-    for rel in strel:
-        # add Ways and nodes
+
+    for rel in qsrel:
         
         # Get Ways id from relation
         rmemberways = RelationMembers.objects.filter(relation=rel, member_type='W')
         ways_id = [r.member_id for r in rmemberways]
-        print ways_id
+
         # Get RelationMembers of type Node
         rmembernodes = RelationMembers.objects.filter(relation=rel, member_type='N')
         
@@ -59,10 +65,10 @@ def set_relations():
                 for wn in waynodes:
                     wnd = WayNodesDoor(waynode=wn, number=number)
                     wnd.save()
-                    print wnd.number, wnd.waynode.way.searchableway.name
+                    print wnd.number, wnd.waynode.way.street.name
             else:
                 print "Skipped '%s' for %s: role is not a number or empty" % \
-                       (wnd.member_role, wnd.waynode.way.searchableway.name)
+                       (wnd.member_role, wnd.waynode.way.street.name)
 
 
 

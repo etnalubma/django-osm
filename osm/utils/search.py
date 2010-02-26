@@ -14,8 +14,8 @@ def get_locations_by_intersection(street1,street2):
     This function return a list of nodes that match the intersection of streets.     
     """
     out = Nodes.objects.all()
-    out = out.filter(waynodes__way__street__name = street1)
-    out = out.filter(waynodes__way__street__name = street2)
+    out = out.filter(waynodes__way__street__id = street1)
+    out = out.filter(waynodes__way__street__id = street2)
     
     return out
     
@@ -37,8 +37,8 @@ def get_location_by_door(street, door):
     dmax = d+20000
 
     # Get ways data
-    qset = WayNodes.objects.select_related('way_street', 'node').filter(way__street__name__startswith = street)
-    
+    qset = WayNodes.objects.select_related('way', 'node').filter(way__street__id = street)
+
     # Set points grouped by way
     waysdict = {}
     for wn in qset:

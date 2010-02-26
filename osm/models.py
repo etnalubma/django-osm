@@ -41,46 +41,23 @@ class Nodes(models.Model):
     def __unicode__(self):
         return u"%i" % self.id
 
-from django.contrib.gis.db.models.query import GeoQuerySet
-
-
-class OSMStreetGeoQuerySet(GeoQuerySet):
-
-    def sintersection(self, name):
-        out = self._clone()
-        out = out.filter(ways__waynodes__node__waynodes__way__street__name__contains = name)
-        out = out.exclude(name__contains = name)
-        out = out.distinct()
-        return out
-
-
-class OSMStreetManager(models.Manager):
-
-    def get_query_set(self):
-        return OSMStreetGeoQuerySet(self.model, using=self._db)
-
-    def sintersection(self, *args, **kwargs):
-        return self.get_query_set().sintersection(*args, **kwargs)
-
-
-
 class Streets(models.Model):
     name = models.TextField(null=True)
     norm = models.TextField(null=True)
     old = models.TextField(null=True)
 
-    objects = OSMStreetManager()
+    @property
+    def intersections(self):
+        out = Streets.objects.filter(ways__waynodes__node__waynodes__way__street = self)
+        out = out.exclude(id = self.id)
+        out = out.distinct()
+        
+        return out
 
-    #@property
-    #def intersections(self):
-    #   out = Streets.objects
-    #   out = out.filter(ways__waynodes__node__waynodes__way__street__id=self.id)
-    #   out = out.exclude(id = self.id)
-    #   out = out.distinct()
-    #   return out
     
     def __unicode__(self):
         return self.name
+
         
 class Ways(models.Model):
     id = models.IntegerField(primary_key=True)
@@ -172,20 +149,7 @@ class RelationTags(models.Model):
 
     def __unicode__(self):
         return u"%s (%s: %s)" % (self.relation_id, self.k, self.v)
-    
-# Custom tables to facilitate ways searching.
-#class SearchableWay(models.Model):
-#    name = models.TextField(null=True)
-#    norm = models.TextField(null=True)
-#    osm_name = models.TextField(null=True)
-#    way = models.OneToOneField('Ways')
-#    
-#    def __unicode__(self):
-#        return self.name
-#        
-#    class Meta:
-#        ordering = ('name',)
-    
+  
 class WayNodesDoor(models.Model):
     waynode = models.OneToOneField('WayNodes')
     number = models.IntegerField(null=True)
