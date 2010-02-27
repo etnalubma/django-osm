@@ -18,18 +18,24 @@ Installation
 Follow the instructions to install osmosis following
 http://wiki.openstreetmap.org/wiki/Osmosis_PostGIS_Setup
 
+Take in count that osmosis database must be different than django database.
+
 After installed, run the sql of osmosis structure into your model database:
 
-$ psql -d database_name -U database_owner -h localhost < osmosis/script/pgsql_simple_schema_0.6.sql 
+$ psql -d <osmosis_database_name> -U <osmosis_database_owner> -h localhost < <osmosis_folder>/script/pgsql_simple_schema_0.6.sql 
 
+where <osmosis_database_name> is the name of the database, <osmosis_database_owner> is the
+username of osmosis database, and <osmosis_folder> is the folder when osmosis whas installed.
 
 Now, we are ready to import osm data to postgis database using osmosis:
 
-$ ./osmosis-trunk/bin/osmosis --read-xml file="inputfile.osm" --write-pgsql user="user" password="pass" database="database_name"
+$ <osmosis_folder>/bin/osmosis --read-xml file="<osm_file>" --write-pgsql user="<osmosis_database_owner>" password="<osmosis_password>" database="<osmosis_database_name>"
 
+Where <osm_file> is the .osm file to import. 
 
 To see more options of osmosis tool check:
 http://wiki.openstreetmap.org/wiki/Osmosis/DetailedUsage
+
 
 Then you need to configure the svn file sources in your settings.py with OSM_CSV_ROOT:
 For example:
@@ -41,19 +47,29 @@ This folder must contain 2 files:
   * abbreviations.csv
     This file must contain 2 columns: the first is a prefix, the second is the normalized prefix
 
+Don't forget to append osm to the INSTALLED_APPS.
 
+Now you are ready to make a syncdb, or reset of osm to create the osm tables.
 
+When tables where created for osm models, now you can import the data from osmosis database.
+First, export database to csv files, with some extra columns for model.
 
-Then you have to run django shell and run 3 scripts:
+$ psql -U <osmosis_database_owner> -d <osmosis_database_name> < <osm_folder>/osmosis/osmosis2osmdjango_csv.sql
+
+That will copy the tables .csv files to /tmp folder.
+Next, import csv files to django database:
+
+$ psql -U <django_database_owner> -d <django_database_name> < <osm_folder>/osmosis/osmdjango_csv_import.sql
+
+Now we have prepopulated models for osm. 
+The last thing to do is to populate the extra models, that is streets and door numbers with django shell:
 
 $ django shell
 >>> from osm.utils.model import *
->>> update_osmosis_tables()
->>> set_searchable_ways()
->>> set_relations()
+>>> set_streets()
+>>> set_doors()
 
-This scripts should add indexes to some models, add extra models for searchable ways, and populate streets and door numbers from relations of type street_numer.
-To see specification:
+To see specification of door numbers schema:
 http://wiki.openstreetmap.org/wiki/Argentina:Altura_de_las_Calles
 
 utils Functions
@@ -62,14 +78,14 @@ utils Functions
 model.py
 ========
 
-Contains the methods to readapt osmosis model and create extra util models.
+Contains the methods to create extra util models.
 
 
 lists.py
 ==========
 
 Contains street lists queries that couldn't be created with standard ORM of django.
-
+This will be deprecated soon.
 
 words.py
 ========
