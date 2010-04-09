@@ -71,4 +71,10 @@ def set_doors():
                        (wnd.member_role, wnd.waynode.way.street.name)
 
 
-
+@transaction.commit_on_success
+def set_intersections():
+    streets = Streets.objects.all()
+    for street in streets:
+        for intersection in street.intersections:
+            street.intersects_with.add(intersection)
+        street.save()

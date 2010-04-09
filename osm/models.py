@@ -45,6 +45,7 @@ class Streets(models.Model):
     name = models.TextField(null=True)
     norm = models.TextField(null=True)
     old = models.TextField(null=True)
+    intersects_with = models.ManyToManyField("self")
 
     @property
     def intersections(self):
@@ -53,12 +54,11 @@ class Streets(models.Model):
         out = out.distinct()
         
         return out
-
-    
+        
     def __unicode__(self):
         return self.name
 
-        
+
 class Ways(models.Model):
     id = models.IntegerField(primary_key=True)
     version = models.IntegerField()
