@@ -33,6 +33,7 @@ def set_streets():
 
         w.street = streets[norm]
         w.save()
+        print(w)
             
 @transaction.commit_on_success
 def set_doors():
@@ -71,10 +72,13 @@ def set_doors():
                        (wnd.member_role, wnd.waynode.way.street.name)
 
 
-@transaction.commit_on_success
 def set_intersections():
     streets = Streets.objects.all()
     for street in streets:
         for intersection in street.intersections:
-            street.intersects_with.add(intersection)
-        street.save()
+            si = StreetIntersection(first_street=street,second_street=intersection)
+            si.save()
+            print(si)
+            #street.intersects_with.add(intersection)
+            #intersection.intersects_with.add(street)
+        #street.save()

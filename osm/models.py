@@ -45,7 +45,9 @@ class Streets(models.Model):
     name = models.TextField(null=True)
     norm = models.TextField(null=True)
     old = models.TextField(null=True)
-    intersects_with = models.ManyToManyField("self")
+    intersects_with = models.ManyToManyField('self', 
+                                             through='StreetIntersection', 
+                                             symmetrical=False)
 
     @property
     def intersections(self):
@@ -58,6 +60,12 @@ class Streets(models.Model):
     def __unicode__(self):
         return self.name
 
+class StreetIntersection(models.Model):
+    first_street = models.ForeignKey('Streets', related_name='first_intersection')
+    second_street = models.ForeignKey('Streets', related_name='second_intersection')
+    
+    def __unicode__(self):
+        return u'%s y %s' %(self.first_street, self.second_street)
 
 class Ways(models.Model):
     id = models.IntegerField(primary_key=True)
