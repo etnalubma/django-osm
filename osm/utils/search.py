@@ -8,17 +8,7 @@ from django.db import connection
 
 MAX_RADIUS = 300
 
-
-def get_locations_by_intersection(street1,street2):
-    """
-    This function return a list of nodes that match the intersection of streets.     
-    """
-    out = Nodes.objects.all()
-    out = out.filter(waynodes__way__street__id = street1)
-    out = out.filter(waynodes__way__street__id = street2)
-    
-    return out
-    
+   
 def get_location_by_door(street, door):
     """ 
     This function get a string with name of street and returns a tuple:
@@ -37,7 +27,7 @@ def get_location_by_door(street, door):
     dmax = d+20000
 
     # Get ways data
-    qset = WayNodes.objects.select_related('way', 'node').filter(way__street__id = street)
+    qset = WayNodes.objects.select_related('way', 'node').filter(way__street__norm = street)
 
     # Set points grouped by way
     waysdict = {}
