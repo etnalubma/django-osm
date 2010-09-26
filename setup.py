@@ -3,9 +3,9 @@ import os
 
 version = '0.1'
 
-setup(name='osm',
+setup(name='djangoosm',
       version=version,
-      description="Django osmosis model and tools",
+      description="Django model and tools for manipulating osm files",
       long_description=open("README.txt").read() + "\n" +
                        open(os.path.join("docs", "HISTORY.txt")).read(),
       # Get more strings from http://www.python.org/pypi?%3Aaction=list_classifiers
@@ -24,6 +24,7 @@ setup(name='osm',
       zip_safe=False,
       install_requires=[
           'setuptools',
+          'osm',
           # -*- Extra requirements: -*-
       ],
       entry_points="""
