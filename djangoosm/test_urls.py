@@ -4,6 +4,6 @@ from django.conf.urls.defaults import *
 # set of URL patterns are used when running unit tests. This test_urls
 # module should be referred to by your test class.
 
-urlpatterns = patterns('osm.views',
+urlpatterns = patterns('djangoosm.views',
   # Add url patterns here
 )

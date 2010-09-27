@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 from django.contrib.gis.gdal import OGRGeometry, SpatialReference
-from osm.models import Streets, WayNodes, WayNodesDoor, Nodes
+from djangoosm.models import Streets, WayNodes, WayNodesDoor, Nodes
 from django.utils import simplejson
 from django.contrib.gis.geos import Point
 from django.db import connection

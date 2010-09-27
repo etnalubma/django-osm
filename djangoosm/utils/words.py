@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from osm import prefix_list, special_chars
+from djangoosm import prefix_list, special_chars
 
 def word_strip(strin):
     """ takes extra spaces from a string and return the list of words """

@@ -1,5 +1,5 @@
 from django.contrib.gis.db import models
-
+from settings import DEFAULT_SRID
 # ---------------------------------------------------------------------
 # This model was extracted from inspectdb of a osmosis schema version 4
 # and modified to fit foreign keys and many to many relations.
@@ -25,7 +25,7 @@ class Nodes(models.Model):
     user = models.ForeignKey('Users')
     tstamp = models.DateTimeField()
     changeset_id = models.IntegerField() 
-    geom = models.PointField()
+    geom = models.PointField(srid=DEFAULT_SRID)
     streets = models.ManyToManyField('Ways', through='WayNodes')
     objects = models.GeoManager()
 

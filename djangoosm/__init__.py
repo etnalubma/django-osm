@@ -1,6 +1,8 @@
 import csv, codecs
 from django.conf import settings 
 
+OSM_SRID = 'EPSG:4326'
+
 OSM_CSV_ROOT = settings.OSM_CSV_ROOT
 
 OSM_ABBREVIATIONS_FILE = 'abbreviations.csv'
