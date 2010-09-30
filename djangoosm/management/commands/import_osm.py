@@ -1,13 +1,11 @@
 from django.core.management.base import BaseCommand, CommandError
-from example.polls.models import Poll
 from djangoosm.utils.model import import_osm, set_streets, set_intersections, set_doors
 
 class Command(BaseCommand):
     args = '<osm_file>'
     help = 'Toma un archivo .osm y lo importa al modelo django'
 
-    def handle(self, *args, **options):
-
+    def handle(self, osmfile=None, **options):
         self.stdout.write('Importing OSM File. This could take a while.')
         import_osm(osmfile)
 
