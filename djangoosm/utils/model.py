@@ -23,16 +23,23 @@ def osm_change_srid(geom, srid):
 
 @transaction.commit_on_success
 def import_osm(osmfile):
+    print "Parsing OSM File"
     osmobjects = OSMXMLFile(osmfile)
-
+    osmobjects.statistic()
+    
     # Import nodes
+    nodes_total = len(osmobjects.nodes)    
+    nodes_count = 0
     for node_id, node in osmobjects.nodes.iteritems():
-        geom = Point((float(node.lat), float(node.lon)));
-        if OSM_SRID != DEFAULT_SRID:
-            geom = osm_change_srid(geom, DEFAULT_SRID)
+        if type(node) == ObjectPlaceHolder:
+            continue    
+        geom = Point(float(node.lon),float(node.lat), srid=OSM_SRID)
+        if OSM_SRID != 'EPSG:900913':
+            geom = osm_change_srid(geom, 'EPSG:900913')
+
 
         user, created = Users.objects.get_or_create(id=node.uid, defaults={'name': node.user})
-    
+
         django_node = Nodes(
             id = node_id,
             version = node.version or 0,
@@ -42,7 +49,8 @@ def import_osm(osmfile):
             geom = geom
         )
         django_node.save()
-    
+
+            
         for k, v in node.tags.iteritems():
             django_nodetag = NodeTags(
                 node = django_node,
@@ -50,8 +58,13 @@ def import_osm(osmfile):
                 v = v
             )
             django_nodetag.save()
+        nodes_count += 1
+        if nodes_count % 100 == 0:
+            print "Imported %d Nodes (%d%%)" % (nodes_count, nodes_count*100/nodes_total)
     
     # Import ways
+    ways_total = len(osmobjects.ways)
+    ways_count = 0
     for way_id, way in osmobjects.ways.iteritems():
     
         if type(way) == ObjectPlaceHolder:
@@ -70,7 +83,6 @@ def import_osm(osmfile):
         
         for seq in range(0, len(way.nodes)):
             django_node = Nodes.objects.get(id=way.nodes[seq].id)
-        
             django_waynode = WayNodes(
                 way = django_way,
                 node = django_node,
@@ -85,9 +97,18 @@ def import_osm(osmfile):
                 v = v
             )
             django_waytag.save()
+
+        ways_count += 1
+        if ways_count % 100 == 0:
+            print "Imported %d Ways (%d%%)" % (ways_count, ways_count*100/ways_total)
     
-    # Import Relations    
+    # Import Relations  
+    relations_count = 0  
+    relations_total = len(osmobjects.relations)
     for relation_id, relation in osmobjects.relations.iteritems():
+        if type(relation) == ObjectPlaceHolder:
+            continue    
+    
         user, created = Users.objects.get_or_create(id=node.uid, defaults={'name': node.user})
             
         django_relation = Relations(
@@ -108,6 +129,8 @@ def import_osm(osmfile):
                 member_type = 'W'
             elif type(member) == Relation:
                 member_type = 'R'
+            elif type(member) == ObjectPlaceHolder:
+                continue
             
             django_relation_member = RelationMembers(
                 relation = django_relation,
@@ -116,6 +139,7 @@ def import_osm(osmfile):
                 member_role = role,
                 sequence_id = sequence
             )
+            django_relation_member.save()
             sequence += 1
 
         for k, v in relation.tags.iteritems():
@@ -125,6 +149,9 @@ def import_osm(osmfile):
                 v = v
             )
             django_relationtag.save()
+        relations_count += 1
+        if relations_count % 100 == 0:
+            print "Imported %d Relations (%d%%)" % (relations_count, relations_count*100/relations_total)
         
         
         
@@ -205,7 +232,7 @@ def set_intersections():
             #intersection.intersects_with.add(street)
         #street.save()
         
-def inport_and_update(osmfile):
+def import_and_update(osmfile):
     print "Importing OSM File. This could take a while."
     import_osm(osmfile)
     print "Setting Streets"
