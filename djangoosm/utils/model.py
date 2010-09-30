@@ -10,8 +10,12 @@ from settings import DEFAULT_SRID
 from django.contrib.gis.geos import Point, LineString, MultiLineString, Polygon, GEOSGeometry
 from django.contrib.gis.gdal import OGRGeometry, SpatialReference
 from datetime import datetime
+from progressbar import Percentage, RotatingMarker, ETA, ProgressBar, Bar
 
 streets_tags = [u'highway']
+
+widgets = ['Elements: ', Percentage(), ' ', Bar(marker='='), ' ', ETA()]
+
 
 
 def osm_change_srid(geom, srid):
@@ -28,8 +32,10 @@ def import_osm(osmfile):
     osmobjects.statistic()
     
     # Import nodes
+    print "Importing Nodes:"
     nodes_total = len(osmobjects.nodes)    
     nodes_count = 0
+    pbar = ProgressBar(widgets=widgets, maxval=nodes_total).start()
     for node_id, node in osmobjects.nodes.iteritems():
         if type(node) == ObjectPlaceHolder:
             continue    
@@ -59,12 +65,15 @@ def import_osm(osmfile):
             )
             django_nodetag.save()
         nodes_count += 1
-        if nodes_count % 100 == 0:
-            print "Imported %d Nodes (%d%%)" % (nodes_count, nodes_count*100/nodes_total)
+        pbar.update(nodes_count)
+    pbar.finish()
+
     
     # Import ways
+    print "Importing Ways:"    
     ways_total = len(osmobjects.ways)
     ways_count = 0
+    pbar = ProgressBar(widgets=widgets, maxval=ways_total).start()        
     for way_id, way in osmobjects.ways.iteritems():
     
         if type(way) == ObjectPlaceHolder:
@@ -99,12 +108,14 @@ def import_osm(osmfile):
             django_waytag.save()
 
         ways_count += 1
-        if ways_count % 100 == 0:
-            print "Imported %d Ways (%d%%)" % (ways_count, ways_count*100/ways_total)
-    
-    # Import Relations  
+        pbar.update(ways_count)        
+    pbar.finish()
+        
+    # Import Relations
+    print "Importing Relations:"    
     relations_count = 0  
     relations_total = len(osmobjects.relations)
+    pbar = ProgressBar(widgets=widgets, maxval=relations_total).start()      
     for relation_id, relation in osmobjects.relations.iteritems():
         if type(relation) == ObjectPlaceHolder:
             continue    
@@ -150,8 +161,8 @@ def import_osm(osmfile):
             )
             django_relationtag.save()
         relations_count += 1
-        if relations_count % 100 == 0:
-            print "Imported %d Relations (%d%%)" % (relations_count, relations_count*100/relations_total)
+        pbar.update(relations_count)        
+    pbar.finish()
         
         
         
@@ -164,6 +175,10 @@ def set_streets():
     ways.update(street=None)
     Streets.objects.all().delete()
     
+    print "Creating Streets:"
+    ways_total = len(ways)
+    ways_count = 0
+    pbar = ProgressBar(widgets=widgets, maxval=ways_total).start()    
     for w in ways:
         tags = w.tags
         reqset = set(streets_tags).intersection(set(tags.keys()))        
@@ -182,7 +197,10 @@ def set_streets():
 
         w.street = streets[norm]
         w.save()
-        print(w)
+
+        ways_count +=1
+        pbar.update(ways_count)
+    pbar.finish()
             
 @transaction.commit_on_success
 def set_doors():
@@ -190,14 +208,16 @@ def set_doors():
     # Clear previous WayNodesDoor
     WayNodesDoor.objects.all().delete()
     
-    
-    
     # Get street number relations  of sequential scheme
     qsrel = Relations.objects.all()
     qsrel = qsrel.filter(relationtags__k = 'type', relationtags__v = 'street_number')
     qsrel = qsrel.filter(relationtags__k = 'scheme', relationtags__v = 'sequential')
 
 
+    print "Setting Doors:"
+    relations_total = len(qsrel)
+    relations_count = 0
+    pbar = ProgressBar(widgets=widgets, maxval=relations_total).start()    
     for rel in qsrel:
         
         # Get Ways id from relation
@@ -215,30 +235,36 @@ def set_doors():
                 for wn in waynodes:
                     wnd = WayNodesDoor(waynode=wn, number=number)
                     wnd.save()
-                    print wnd.number, wnd.waynode.way.street.name
+
             else:
                 print "Skipped '%s' for %s: role is not a number or empty" % \
                        (wnd.member_role, wnd.waynode.way.street.name)
-
+        relations_count += 1
+        pbar.update(relations_count)
+    pbar.finish()
 
 def set_intersections():
     streets = Streets.objects.all()
+    print "Setting Streets:"    
+    street_count = 0
+    street_total = len(streets)
+    pbar = ProgressBar(widgets=widgets, maxval=street_total).start()    
     for street in streets:
         for intersection in street.intersections:
             si = StreetIntersection(first_street=street,second_street=intersection)
             si.save()
-            print(si)
+
             #street.intersects_with.add(intersection)
             #intersection.intersects_with.add(street)
         #street.save()
-        
+        street_count += 1
+        pbar.update(street_count)
+    pbar.finish()
+    
 def import_and_update(osmfile):
     print "Importing OSM File. This could take a while."
     import_osm(osmfile)
-    print "Setting Streets"
     set_streets()
-    print "Setting Intersections"
     set_intersections()
-    print "Setting Doors"
     set_doors()
     
