@@ -64,7 +64,7 @@ $ psql -U <django_database_owner> -d <django_database_name> < <osm_folder>/osmos
 Now we have prepopulated models for osm. 
 The last thing to do is to populate the extra models, that is streets and door numbers with django shell:
 
-$ django shell
+$ django-admin.py shell
 >>> from osm.utils.model import *
 >>> set_streets()
 >>> set_doors()
